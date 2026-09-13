@@ -1,4 +1,95 @@
 {
-  "instructions": "Replace this with Crispy Corner's REAL menu before running npm run menu:import. Prices are integer PKR amounts.",
-  "categories": []
+  "restaurant": "Crispy Corner",
+  "location": "Tordher, Swabi",
+  "currency": "PKR",
+  "categories": [
+    {
+      "id": "signature",
+      "name": "Signature",
+      "items": [
+        {
+          "id": "zinger-stack",
+          "name": "The Zinger Stack",
+          "description": "Spicy crispy fillet, house sauce, fries, drink",
+          "price": 500
+        }
+      ]
+    },
+    {
+      "id": "meals",
+      "name": "Meals",
+      "items": [
+        {
+          "id": "broast-meal",
+          "name": "Broast Meal",
+          "description": "2 pc crispy broast, fries, drink",
+          "price": 550
+        },
+        {
+          "id": "classic-burger-meal",
+          "name": "Classic Burger Meal",
+          "description": "Chicken burger, fries, drink",
+          "price": 450
+        },
+        {
+          "id": "shawarma-meal",
+          "name": "Shawarma Meal",
+          "description": "Chicken shawarma, fries, drink",
+          "price": 380
+        },
+        {
+          "id": "family-deal",
+          "name": "Family Deal",
+          "description": "4 pc broast, 2 fries, 2 drinks",
+          "price": 1050
+        }
+      ]
+    },
+    {
+      "id": "a_la_carte",
+      "name": "A La Carte",
+      "items": [
+        { "id": "broast-2pc", "name": "Broast (2 pc)", "price": 350 },
+        { "id": "broast-4pc", "name": "Broast (4 pc)", "price": 650 },
+        { "id": "zinger-burger", "name": "Zinger Burger", "price": 300 },
+        { "id": "chicken-burger", "name": "Chicken Burger", "price": 250 },
+        { "id": "shawarma", "name": "Chicken Shawarma", "price": 150 },
+        { "id": "nuggets-6pc", "name": "Chicken Nuggets (6 pc)", "price": 300 }
+      ]
+    },
+    {
+      "id": "sides_drinks",
+      "name": "Sides & Drinks",
+      "items": [
+        { "id": "fries-regular", "name": "Fries (Regular)", "price": 150 },
+        { "id": "fries-large", "name": "Fries (Large)", "price": 250 },
+        { "id": "drink-regular", "name": "Soft Drink (Regular)", "price": 80 },
+        { "id": "drink-1-5l", "name": "Soft Drink (1.5L)", "price": 180 }
+      ]
+    },
+    {
+      "id": "rice",
+      "name": "Rice",
+      "items": [
+        { "id": "chicken-biryani", "name": "Chicken Biryani", "price": 300 },
+        { "id": "beef-pulao", "name": "Beef Pulao", "price": 350 }
+      ]
+    },
+    {
+      "id": "chinese",
+      "name": "Chinese",
+      "items": [
+        { "id": "chicken-chowmein", "name": "Chicken Chowmein", "price": 280 },
+        { "id": "vegetable-noodles", "name": "Vegetable Noodles", "price": 220 }
+      ]
+    },
+    {
+      "id": "shakes_desserts",
+      "name": "Shakes & Desserts",
+      "items": [
+        { "id": "fresh-milkshake", "name": "Fresh Milkshake", "description": "Flavors: mango, banana, chocolate", "price": 220 },
+        { "id": "ice-cream", "name": "Ice Cream (scoop)", "price": 120 }
+      ]
+    }
+  ]
 }
