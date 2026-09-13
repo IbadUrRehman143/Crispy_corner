@@ -49,7 +49,8 @@ export async function POST(request: Request) {
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
         {
-          error: 'Only JPG, PNG and WebP images are allowed',
+          error:
+            'Only JPG, PNG and WebP images are allowed',
         },
         { status: 400 }
       );
@@ -79,12 +80,13 @@ export async function POST(request: Request) {
             folder: 'crispy-corner/menu',
             resource_type: 'image',
 
+            // Keep complete artwork.
+            // Never crop left/right or top/bottom.
             transformation: [
               {
-                width: 900,
+                width: 1200,
                 height: 750,
-                crop: 'fill',
-                gravity: 'auto',
+                crop: 'limit',
                 quality: 'auto',
                 fetch_format: 'auto',
               },
@@ -120,7 +122,10 @@ export async function POST(request: Request) {
       publicId: result.public_id,
     });
   } catch (error) {
-    console.error('Image upload failed:', error);
+    console.error(
+      'Image upload failed:',
+      error
+    );
 
     return NextResponse.json(
       {
