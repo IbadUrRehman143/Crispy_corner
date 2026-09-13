@@ -1,6 +1,11 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { useRouter } from 'next/navigation';
 
 type C = {
@@ -26,65 +31,146 @@ export default function AdminMenu() {
   const [products, setProducts] = useState<P[]>([]);
   const [categories, setCategories] = useState<C[]>([]);
   const [edit, setEdit] = useState<P | null>(null);
+
   const [error, setError] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
-    const x = await fetch('/api/admin/products', {
-      cache: 'no-store',
-    });
+    try {
+      const x = await fetch('/api/admin/products', {
+        cache: 'no-store',
+      });
 
-    if (x.status === 401) {
-      return r.push('/admin/login');
+      if (x.status === 401) {
+        r.push('/admin/login');
+        return;
+      }
+
+      const d = await x.json();
+
+      if (!x.ok) {
+        throw new Error(
+          d.error || 'Unable to load menu'
+        );
+      }
+
+      setProducts(d.products || []);
+      setCategories(d.categories || []);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to load menu'
+      );
     }
-
-    const d = await x.json();
-
-    setProducts(d.products || []);
-    setCategories(d.categories || []);
   }, [r]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  async function save(e: FormEvent<HTMLFormElement>) {
+  async function uploadImage(file: File) {
+    setError('');
+
+    const allowedTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setError(
+        'Only JPG, PNG and WebP images are allowed.'
+      );
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+
+    if (file.size > maxSize) {
+      setError('Image must be 5MB or smaller.');
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const data = new FormData();
+      data.append('file', file);
+
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: data,
+      });
+
+      if (res.status === 401) {
+        r.push('/admin/login');
+        return;
+      }
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          result.error || 'Image upload failed'
+        );
+      }
+
+      setImageUrl(result.url);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Image upload failed'
+      );
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function save(
+    e: FormEvent<HTMLFormElement>
+  ) {
     e.preventDefault();
 
-    // FIX:
-    // Capture form before await.
-    const form = e.currentTarget;
+    if (uploading || saving) {
+      return;
+    }
 
+    setError('');
+    setSaving(true);
+
+    const form = e.currentTarget;
     const f = new FormData(form);
 
     const payload = {
       ...(edit ? { id: edit.id } : {}),
 
-      name: String(f.get('name')),
+      name: String(f.get('name') || '').trim(),
 
       description: String(
         f.get('description') || ''
-      ),
+      ).trim(),
 
       price: Number(f.get('price')),
 
-      imageUrl:
-        String(f.get('imageUrl') || '') || null,
+      imageUrl: imageUrl || null,
 
       categoryId: String(
-        f.get('categoryId')
+        f.get('categoryId') || ''
       ),
 
-      active:
-        f.get('active') === 'on',
+      active: f.get('active') === 'on',
 
       sortOrder: Number(
         f.get('sortOrder') || 0
       ),
     };
 
-    const x = await fetch(
-      '/api/admin/products',
-      {
+    try {
+      const x = await fetch('/api/admin/products', {
         method: edit ? 'PATCH' : 'POST',
 
         headers: {
@@ -92,33 +178,60 @@ export default function AdminMenu() {
         },
 
         body: JSON.stringify(payload),
+      });
+
+      if (x.status === 401) {
+        r.push('/admin/login');
+        return;
       }
-    );
 
-    if (!x.ok) {
+      const d = await x.json();
+
+      if (!x.ok) {
+        throw new Error(
+          d.error || 'Unable to save product'
+        );
+      }
+
+      form.reset();
+
+      setEdit(null);
+      setImageUrl('');
+      setError('');
+
+      await load();
+    } catch (err) {
       setError(
-        (await x.json()).error ||
-          'Could not save product'
+        err instanceof Error
+          ? err.message
+          : 'Unable to save product'
       );
-
-      return;
+    } finally {
+      setSaving(false);
     }
+  }
 
-    setEdit(null);
+  function startEdit(product: P) {
+    setEdit(product);
+    setImageUrl(product.imageUrl || '');
     setError('');
 
-    // FIX:
-    // Don't use e.currentTarget after await.
-    form.reset();
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  }
 
-    await load();
+  function cancelEdit() {
+    setEdit(null);
+    setImageUrl('');
+    setError('');
   }
 
   return (
     <>
       <section className="admin-hero">
         <div className="wrap admin-hero-row">
-
           <div>
             <div className="eyebrow light">
               MENU CONTROL
@@ -143,19 +256,15 @@ export default function AdminMenu() {
               ← Orders
             </button>
           </div>
-
         </div>
       </section>
 
       <main className="wrap content admin-shell">
-
         <div className="admin-menu-layout">
-
           <form
             className="card admin-form"
             onSubmit={save}
           >
-
             <div className="eyebrow">
               {edit
                 ? 'EDIT PRODUCT'
@@ -178,8 +287,8 @@ export default function AdminMenu() {
                 className="input"
                 name="name"
                 required
-                defaultValue={edit?.name}
-                key={'n' + edit?.id}
+                defaultValue={edit?.name || ''}
+                key={'n' + (edit?.id || 'new')}
               />
             </label>
 
@@ -194,14 +303,13 @@ export default function AdminMenu() {
                 name="description"
                 rows={3}
                 defaultValue={
-                  edit?.description
+                  edit?.description || ''
                 }
-                key={'d' + edit?.id}
+                key={'d' + (edit?.id || 'new')}
               />
             </label>
 
             <div className="form-two">
-
               <label className="form-label">
                 Price (Rs){' '}
                 <span className="required">
@@ -214,8 +322,8 @@ export default function AdminMenu() {
                   min="1"
                   name="price"
                   required
-                  defaultValue={edit?.price}
-                  key={'p' + edit?.id}
+                  defaultValue={edit?.price || ''}
+                  key={'p' + (edit?.id || 'new')}
                 />
               </label>
 
@@ -230,9 +338,11 @@ export default function AdminMenu() {
                   name="categoryId"
                   required
                   defaultValue={
-                    edit?.categoryId
+                    edit?.categoryId ||
+                    categories[0]?.id ||
+                    ''
                   }
-                  key={'c' + edit?.id}
+                  key={'c' + (edit?.id || 'new')}
                 >
                   {categories.map((c) => (
                     <option
@@ -244,34 +354,100 @@ export default function AdminMenu() {
                   ))}
                 </select>
               </label>
-
             </div>
 
             <label className="form-label">
-              Image path / URL{' '}
+              Product image{' '}
               <span className="optional">
                 (Optional)
               </span>
 
               <input
                 className="input"
-                name="imageUrl"
-                placeholder="/menu/zinger-burger.webp"
-                defaultValue={
-                  edit?.imageUrl || ''
-                }
-                key={'i' + edit?.id}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                disabled={uploading || saving}
+                onChange={(e) => {
+                  const file =
+                    e.target.files?.[0];
+
+                  if (file) {
+                    uploadImage(file);
+                  }
+                }}
               />
 
               <small>
-                Put local images inside
-                public/menu and use
-                /menu/filename.webp.
+                JPG, PNG or WebP. Maximum 5MB.
               </small>
+
+              {uploading && (
+                <small
+                  style={{
+                    display: 'block',
+                    marginTop: 8,
+                  }}
+                >
+                  Uploading image...
+                </small>
+              )}
+
+              {imageUrl && (
+                <div
+                  style={{
+                    marginTop: 12,
+                  }}
+                >
+                  <img
+                    src={imageUrl}
+                    alt={
+                      edit?.name
+                        ? `${edit.name} preview`
+                        : 'Product preview'
+                    }
+                    style={{
+                      width: 140,
+                      height: 140,
+                      objectFit: 'cover',
+                      borderRadius: 12,
+                    }}
+                  />
+
+                  <small
+                    style={{
+                      display: 'block',
+                      marginTop: 6,
+                    }}
+                  >
+                    Image ready ✓
+                  </small>
+
+                  <button
+                    type="button"
+                    className="btn btn-outline compact-btn"
+                    style={{
+                      marginTop: 8,
+                    }}
+                    onClick={() =>
+                      setImageUrl('')
+                    }
+                    disabled={
+                      uploading || saving
+                    }
+                  >
+                    Remove Image
+                  </button>
+                </div>
+              )}
             </label>
 
-            <div className="form-two">
+            <input
+              type="hidden"
+              name="imageUrl"
+              value={imageUrl}
+            />
 
+            <div className="form-two">
               <label className="form-label">
                 Sort order
 
@@ -282,7 +458,7 @@ export default function AdminMenu() {
                   defaultValue={
                     edit?.sortOrder || 0
                   }
-                  key={'s' + edit?.id}
+                  key={'s' + (edit?.id || 'new')}
                 />
               </label>
 
@@ -293,12 +469,11 @@ export default function AdminMenu() {
                   defaultChecked={
                     edit?.active ?? true
                   }
-                  key={'a' + edit?.id}
+                  key={'a' + (edit?.id || 'new')}
                 />
 
                 Available on menu
               </label>
-
             </div>
 
             {error && (
@@ -308,38 +483,36 @@ export default function AdminMenu() {
             )}
 
             <div className="admin-actions">
-
               <button
                 className="btn"
                 type="submit"
+                disabled={uploading || saving}
               >
-                {edit
-                  ? 'Save Changes'
-                  : 'Add Product'}{' '}
-                →
+                {uploading
+                  ? 'Uploading...'
+                  : saving
+                    ? 'Saving...'
+                    : edit
+                      ? 'Save Changes →'
+                      : 'Add Product →'}
               </button>
 
               {edit && (
                 <button
                   type="button"
                   className="btn btn-outline"
-                  onClick={() =>
-                    setEdit(null)
-                  }
+                  onClick={cancelEdit}
+                  disabled={uploading || saving}
                 >
                   Cancel
                 </button>
               )}
-
             </div>
-
           </form>
 
           <section>
-
             <div className="section-head">
               <div>
-
                 <div className="eyebrow">
                   LIVE CATALOGUE
                 </div>
@@ -347,20 +520,16 @@ export default function AdminMenu() {
                 <h2>
                   {products.length} products
                 </h2>
-
               </div>
             </div>
 
             <div className="admin-product-list">
-
               {products.map((p) => (
                 <article
                   className="card admin-product"
                   key={p.id}
                 >
-
                   <div>
-
                     <span
                       className={
                         'status-chip ' +
@@ -380,27 +549,22 @@ export default function AdminMenu() {
                       {p.category.name} • Rs{' '}
                       {p.price}
                     </p>
-
                   </div>
 
                   <button
+                    type="button"
                     className="btn btn-outline compact-btn"
                     onClick={() =>
-                      setEdit(p)
+                      startEdit(p)
                     }
                   >
                     Edit
                   </button>
-
                 </article>
               ))}
-
             </div>
-
           </section>
-
         </div>
-
       </main>
     </>
   );
