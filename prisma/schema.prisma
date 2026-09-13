@@ -1,0 +1,11 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+
+enum OrderType { Pickup Delivery }
+enum OrderStatus { Received Preparing Ready OutForDelivery Completed Cancelled }
+
+model Admin { id BigInt @id @default(autoincrement()) email String @unique passwordHash String createdAt DateTime @default(now()) }
+model Category { id String @id @default(cuid()) name String @unique sortOrder Int @default(0) active Boolean @default(true) products Product[] }
+model Product { id String @id @default(cuid()) name String description String @default("") price Int imageUrl String? active Boolean @default(true) sortOrder Int @default(0) categoryId String category Category @relation(fields:[categoryId],references:[id]) orderItems OrderItem[] createdAt DateTime @default(now()) updatedAt DateTime @updatedAt @@index([categoryId,active,sortOrder]) }
+model Order { id BigInt @id @default(autoincrement()) orderNo String @unique customerName String phone String address String? orderType OrderType status OrderStatus @default(Received) total Int messageSent Boolean @default(false) createdAt DateTime @default(now()) updatedAt DateTime @updatedAt items OrderItem[] @@index([createdAt]) @@index([phone]) }
+model OrderItem { id BigInt @id @default(autoincrement()) orderId BigInt productId String? name String unitPrice Int qty Int order Order @relation(fields:[orderId],references:[id],onDelete:Cascade) product Product? @relation(fields:[productId],references:[id],onDelete:SetNull) @@index([orderId]) }

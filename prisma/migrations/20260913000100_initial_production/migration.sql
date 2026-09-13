@@ -1,0 +1,11 @@
+CREATE TYPE "OrderType" AS ENUM ('Pickup','Delivery');
+CREATE TYPE "OrderStatus" AS ENUM ('Received','Preparing','Ready','OutForDelivery','Completed','Cancelled');
+CREATE TABLE "Admin" ("id" BIGSERIAL PRIMARY KEY,"email" TEXT NOT NULL UNIQUE,"passwordHash" TEXT NOT NULL,"createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE "Category" ("id" TEXT PRIMARY KEY,"name" TEXT NOT NULL UNIQUE,"sortOrder" INTEGER NOT NULL DEFAULT 0,"active" BOOLEAN NOT NULL DEFAULT true);
+CREATE TABLE "Product" ("id" TEXT PRIMARY KEY,"name" TEXT NOT NULL,"description" TEXT NOT NULL DEFAULT '',"price" INTEGER NOT NULL CHECK ("price" >= 0),"imageUrl" TEXT,"active" BOOLEAN NOT NULL DEFAULT true,"sortOrder" INTEGER NOT NULL DEFAULT 0,"categoryId" TEXT NOT NULL REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE,"createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,"updatedAt" TIMESTAMP(3) NOT NULL);
+CREATE TABLE "Order" ("id" BIGSERIAL PRIMARY KEY,"orderNo" TEXT NOT NULL UNIQUE,"customerName" TEXT NOT NULL,"phone" TEXT NOT NULL,"address" TEXT,"orderType" "OrderType" NOT NULL,"status" "OrderStatus" NOT NULL DEFAULT 'Received',"total" INTEGER NOT NULL CHECK ("total" >= 0),"messageSent" BOOLEAN NOT NULL DEFAULT false,"createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,"updatedAt" TIMESTAMP(3) NOT NULL);
+CREATE TABLE "OrderItem" ("id" BIGSERIAL PRIMARY KEY,"orderId" BIGINT NOT NULL REFERENCES "Order"("id") ON DELETE CASCADE ON UPDATE CASCADE,"productId" TEXT REFERENCES "Product"("id") ON DELETE SET NULL ON UPDATE CASCADE,"name" TEXT NOT NULL,"unitPrice" INTEGER NOT NULL CHECK ("unitPrice" >= 0),"qty" INTEGER NOT NULL CHECK ("qty" > 0));
+CREATE INDEX "Product_categoryId_active_sortOrder_idx" ON "Product"("categoryId","active","sortOrder");
+CREATE INDEX "Order_createdAt_idx" ON "Order"("createdAt");
+CREATE INDEX "Order_phone_idx" ON "Order"("phone");
+CREATE INDEX "OrderItem_orderId_idx" ON "OrderItem"("orderId");
