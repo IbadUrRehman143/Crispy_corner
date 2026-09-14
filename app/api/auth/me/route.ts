@@ -1,0 +1,1 @@
+import {getCustomerSession} from '@/lib/customerAuth';import {prisma} from '@/lib/prisma';export async function GET(){const s=await getCustomerSession();if(!s?.sub)return Response.json({user:null});const c=await prisma.customer.findUnique({where:{id:String(s.sub)},select:{id:true,name:true,email:true,phone:true}});return Response.json({user:c})}

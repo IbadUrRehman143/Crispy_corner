@@ -1,1 +1,1 @@
-export type CartItem={id:string;name:string;price:number;qty:number}; export const getCart=():CartItem[]=>JSON.parse(localStorage.getItem('cc_cart')||'[]'); export const setCart=(x:CartItem[])=>{localStorage.setItem('cc_cart',JSON.stringify(x));window.dispatchEvent(new Event('cc-cart'))};
+export type CartItem={id:string;name:string;price:number;qty:number}; export const getCart=():CartItem[]=>JSON.parse(localStorage.getItem('tb_cart')||'[]'); export const setCart=(x:CartItem[])=>{localStorage.setItem('tb_cart',JSON.stringify(x));window.dispatchEvent(new Event('tb-cart'))};

@@ -1,23 +1,3 @@
 'use client';
-import Image from 'next/image';
-import Link from 'next/link';
-import {usePathname,useRouter} from 'next/navigation';
-import {useEffect,useState} from 'react';
-import {getCart} from '@/lib/cart';
-
-export default function SiteChrome(){
-  const pathname=usePathname(); const router=useRouter(); const [count,setCount]=useState(0);
-  const refresh=()=>setCount(getCart().reduce((n,x)=>n+x.qty,0));
-  useEffect(()=>{refresh(); window.addEventListener('cc-cart',refresh); window.addEventListener('storage',refresh); return()=>{window.removeEventListener('cc-cart',refresh);window.removeEventListener('storage',refresh)}},[]);
-  if(pathname.startsWith('/admin')) return null;
-  const back=pathname!=='/';
-  return <>
-    <div className="topbar">Freshly prepared • Pickup & Delivery • Tordher, Swabi</div>
-    <header className="site-header"><div className="wrap nav">
-      {back&&<button className="back-btn" aria-label="Go back" onClick={()=>router.back()}>←</button>}
-      <Link className="brand" href="/"><Image src="/crispy-icon.png" alt="Crispy Corner" width={52} height={52}/><span>Crispy Corner</span></Link>
-      <nav className="navlinks"><Link href="/menu">Menu</Link><Link href="/order/track">Track Order</Link><Link className="cart-link" href="/cart">Cart{count>0&&<b className="cart-badge">{count>99?'99+':count}</b>}</Link><Link className="nav-order" href="/menu">Order Now</Link></nav>
-    </div></header>
-    <nav className="mobile-nav"><Link href="/menu"><span>🍗</span>Menu</Link><Link href="/cart" className="mobile-cart"><span>🛒</span>Cart{count>0&&<b className="cart-badge mobile-badge">{count>99?'99+':count}</b>}</Link><Link href="/order/track"><span>📍</span>Track</Link></nav>
-  </>
-}
+import Image from 'next/image';import Link from 'next/link';import {usePathname,useRouter} from 'next/navigation';import {useEffect,useState} from 'react';import {getCart} from '@/lib/cart';import {LanguageSwitcher,T} from '@/components/LanguageProvider';
+export default function SiteChrome(){const pathname=usePathname();const router=useRouter();const [count,setCount]=useState(0),[user,setUser]=useState<any>(null);const refresh=()=>setCount(getCart().reduce((n,x)=>n+x.qty,0));useEffect(()=>{refresh();window.addEventListener('tb-cart',refresh);window.addEventListener('storage',refresh);fetch('/api/auth/me').then(r=>r.json()).then(d=>setUser(d.user)).catch(()=>{});return()=>{window.removeEventListener('tb-cart',refresh);window.removeEventListener('storage',refresh)}},[pathname]);async function logout(){await fetch('/api/auth/logout',{method:'POST'});setUser(null);router.push('/');router.refresh()}if(pathname.startsWith('/admin'))return <div className="admin-global-back"><button className="back-btn" aria-label="Go back" onClick={()=>router.back()}>←</button></div>;return <><div className="topbar"><span data-i18n="Freshly prepared • Pickup & Delivery • Tordher, Swabi">Freshly prepared • Pickup & Delivery • Tordher, Swabi</span></div><header className="site-header"><div className="wrap nav"><button className="back-btn" aria-label="Go back" onClick={()=>pathname==='/'?router.push('/'):router.back()}>←</button><Link className="brand" href="/"><Image src="/tordher-bites-logo.svg" alt="Tordher Bites" width={208} height={52}/></Link><nav className="navlinks"><Link href="/menu"><T>Menu</T></Link><Link href="/order/track"><T>Track Order</T></Link><Link className="cart-link" href="/cart">Cart{count>0&&<b className="cart-badge">{count>99?'99+':count}</b>}</Link>{user?<><span className="user-chip">Hi, {user.name.split(' ')[0]}</span><button className="link-button" onClick={logout}><T>Logout</T></button></>:<Link href="/login"><T>Login</T></Link>}<LanguageSwitcher/><Link className="nav-order" href="/menu"><T>Order Now</T></Link></nav></div></header><div className="mobile-tools"><LanguageSwitcher/>{user?<button className="link-button" onClick={logout}><T>Logout</T></button>:<Link href="/login"><T>Login</T></Link>}</div><nav className="mobile-nav"><Link href="/menu"><span>🍗</span><T>Menu</T></Link><Link href="/cart" className="mobile-cart"><span>🛒</span>Cart{count>0&&<b className="cart-badge mobile-badge">{count>99?'99+':count}</b>}</Link><Link href="/order/track"><span>📍</span>Track</Link></nav></>}

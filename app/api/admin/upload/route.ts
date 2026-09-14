@@ -13,7 +13,7 @@ cloudinary.config({
 
 export async function POST(request: Request) {
   try {
-    await requireAdmin();
+    if (!(await requireAdmin())) { return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); }
 
     if (
       !process.env.CLOUDINARY_CLOUD_NAME ||
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
       const stream =
         cloudinary.uploader.upload_stream(
           {
-            folder: 'crispy-corner/menu',
+            folder: 'tasty-bite/menu',
             resource_type: 'image',
 
             // Keep complete artwork.

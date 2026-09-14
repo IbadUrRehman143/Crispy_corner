@@ -28,6 +28,17 @@ model Admin {
   createdAt    DateTime @default(now())
 }
 
+
+model Customer {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String
+  passwordHash String
+  createdAt    DateTime @default(now())
+  orders       Order[]
+}
+
 model Category {
   id        String    @id @default(cuid())
   name      String    @unique
@@ -63,9 +74,14 @@ model Order {
   status       OrderStatus @default(Received)
   total        Int
   messageSent  Boolean     @default(false)
+  customerNote String?
+  deliveryFee  Int         @default(0)
+  estimatedMinutes Int      @default(30)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   items        OrderItem[]
+  customerId   String?
+  customer     Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
   @@index([phone])
@@ -83,4 +99,17 @@ model OrderItem {
   product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   @@index([orderId])
+}
+
+model StoreSetting {
+  id               Int      @id @default(1)
+  storeName        String   @default("Tasty Bite")
+  isOpen           Boolean  @default(true)
+  openingTime      String   @default("11:00")
+  closingTime      String   @default("23:00")
+  deliveryFee      Int      @default(0)
+  minimumDelivery  Int      @default(0)
+  estimatedMinutes Int      @default(30)
+  deliveryAreas    String   @default("Tordher")
+  updatedAt        DateTime @updatedAt
 }

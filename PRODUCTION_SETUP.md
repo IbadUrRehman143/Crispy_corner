@@ -1,4 +1,4 @@
-# Crispy Corner production setup
+# Tasty Bite production setup
 
 This repository intentionally contains **no fake production credentials and no fake menu**.
 
@@ -25,7 +25,7 @@ Create a Vercel project, add the same production environment variables, deploy, 
 
 ### Still required from the business owner
 - PostgreSQL connection string
-- Crispy Corner real menu, prices and item images
+- Tasty Bite real menu, prices and item images
 - Admin email/password (do not send passwords in public/shared chats)
 - Twilio Account SID/Auth Token + approved WhatsApp/SMS sender
 - Final domain name
